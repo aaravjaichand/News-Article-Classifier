@@ -25,7 +25,7 @@ def learn_digits():
     # print(digits_set.DESCR)
 
     # This is the dataset.
-    # To get the inputs (pixels of each image) use `digits_set.data`.
+    # To get the inputs (pixels of each image) use `digits_set.data`
     #     This returns (1797, 64) because there are 1797 images, and each one has 64 pixels
     #     (each image is flattened into a 1D array to make them easier to ingest for the neural
     #     network, as opposed to a 2D array which is easier to visualize)
