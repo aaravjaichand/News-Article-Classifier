@@ -3,9 +3,6 @@ from sklearn import datasets
 import numpy as np
 
 def display_img(img):
-    '''
-    Prints the contents of an input `img` to the command line using 4 different shades of gray
-    '''
     dark_black = '\u001B[40m  '
     light_black = '\u001B[100m  '
     dark_white = '\u001B[47m  '
