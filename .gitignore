@@ -379,3 +379,9 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/venv,python,macos,windows,vim,pycharm
+
+# Project-specific files to ignore
+*.json
+*.jpg
+*.jpeg
+*.csv
