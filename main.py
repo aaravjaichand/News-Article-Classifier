@@ -8,7 +8,6 @@ f = open("News_Category_Dataset_v3.json", "r")
 
 
 
-#type(json.load(open('News_Category_dataset_v3.json', "r")))
 inputs = []
 targets = []
 i = 0
