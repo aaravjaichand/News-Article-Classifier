@@ -11,22 +11,61 @@ categories = []
 inputs = []
 targets = []
 
-
 i = 0
+
+rAmount = input("Amount of lines to be read in: ")
+
 for line in f:
     data = json.loads(line)
-    input_ = [data["link"], data["headline"], data["short_description"]]
+    input_ = [data["headline"], data["short_description"]]
     target = data["category"]
     inputs.append(input_)
     targets.append(target)
-    print(inputs[i][1])
-    print(targets[i] + "\n")
+    
     i += 1
+    if i == int(rAmount):
+        break
 
 for i in range(len(targets)):
     if targets[i] not in categories: categories.append(targets[i]);
 
-print(categories)
+def articles(string):
+    wordList = string.split()
+    the_a_count = 0
+    sentenceWC = len(wordList)
+    the_a_count += wordList.count("The") + wordList.count("the") + wordList.count("A") + wordList.count("a")
+    if the_a_count == 0 or sentenceWC == 0:
+        return "0"
+    articleRatio = the_a_count/sentenceWC
+
+    
+
+    return articleRatio
+
+    
+def avg(string):
+
+
+    wordList = string.split()
+    totalNumLetters = 0
+    totalWords = len(wordList)
+    for i in range(len(wordList)):
+        word = wordList[i]
+        totalNumLetters+=len(word)
+    if totalWords == 0 or totalNumLetters == 0:
+        return "0"
+    avgWL = totalNumLetters/totalWords
+    return avgWL
+
+
+
+for i in range(len(inputs)):
+    print()
+    print(i+1, inputs[i][1], "AVERAGE WORD LENGTH:", avg(inputs[i][1]), "ARTICLES RATIO:" ,articles(inputs[i][1]), "CATEGORY",targets[i])
+    if i == len(inputs) - 1:
+        print()
+
+
 
 def display_img(img):
     dark_black = '\u001B[40m  '
@@ -82,5 +121,5 @@ def learn_digits():
         img = inputs[i].reshape(8, 8)  # reshape to look like an 8x8 image
         display_img(img)
 
-if __name__ == '__main__':
-    learn_digits()
+# if __name__ == '__main__':
+#     learn_digits()
