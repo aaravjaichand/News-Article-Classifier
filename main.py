@@ -7,9 +7,11 @@ import json
 f = open("News_Category_Dataset_v3.json", "r")
 
 
-
+categories = []
 inputs = []
 targets = []
+
+
 i = 0
 for line in f:
     data = json.loads(line)
@@ -21,7 +23,10 @@ for line in f:
     print(targets[i] + "\n")
     i += 1
 
+for i in range(len(targets)):
+    if targets[i] not in categories: categories.append(targets[i]);
 
+print(categories)
 
 def display_img(img):
     dark_black = '\u001B[40m  '
