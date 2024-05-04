@@ -1,6 +1,23 @@
 from sklearn.neural_network import MLPClassifier
 from sklearn import datasets
 import numpy as np
+import json
+
+
+# f = open("News_Category_Dataset_v3.json", "r")
+inputs = json.load(open('News_Category_dataset_v3.json', "r"))  
+
+#type(json.load(open('News_Category_dataset_v3.json', "r")))
+targets = [article["category"] for article in inputs]
+# i = 0
+# for line in f:
+#     data = json.loads(line)
+#     dataList = [data["link"], data["headline"], data["category"], data["short_description"], data["authors"], data["date"]]
+#     news_data.append(dataList)
+#     if i == 200:
+#         break
+#     i += 1
+
 
 def display_img(img):
     dark_black = '\u001B[40m  '
