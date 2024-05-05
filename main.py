@@ -28,7 +28,69 @@ for line in f:
 
 for i in range(len(targets)):
     if targets[i] not in categories: categories.append(targets[i]);
+def preposition(string):
+    prepositions = [
+    "in",
+    "on",
+    "at",
+    "of",
+    "to",
+    "with",
+    "by",
+    "for",
+    "about",
+    "from",
+    "into",
+    "onto",
+    "upon",
+    "within",
+    "without",
+    "through",
+    "during",
+    "among",
+    "between",
+    "above",
+    "below",
+    "under",
+    "over",
+    "underneath",
+    "around",
+    "near",
+    "after",
+    "before",
+    "behind",
+    "beside",
+    "inside",
+    "outside",
+    "since",
+    "until",
+    "upon"
+    ]
 
+    prepositionCount = 0
+    sentenceLength = len(string.split())
+    sentence = string.split()
+    for word in sentence:
+        if word.lower() in prepositions:
+            prepositionCount += 1
+    
+    if prepositionCount == 0 or sentenceLength == 0:
+        return "Undefined"
+    else:
+        return prepositionCount/sentenceLength
+def upperLower(string):
+    listFormat = string.split()
+    upper = 0
+    lower = 0
+    for word in string:
+        letters = list(word)
+        for letter in letters:
+            
+            if letter.isupper():
+                upper += 1
+            else:
+                lower += 1
+    return upper/lower
 def articles(string):
     wordList = string.split()
     the_a_count = 0
@@ -41,8 +103,6 @@ def articles(string):
     
 
     return articleRatio
-
-    
 def avg(string):
 
 
@@ -56,18 +116,29 @@ def avg(string):
         return "0"
     avgWL = totalNumLetters/totalWords
     return avgWL
+def sentenceLen(string):
+    return len(string.split())
+def wordLookup(string, word):
+    stringSplit = string.split()
 
-
+    count = 0
+    for i in range(len(stringSplit)):
+        if stringSplit[i].lower() == word.lower():
+            count += 1
+    
+    return count
 
 for i in range(len(inputs)):
     print()
-    print(i+1, inputs[i][1], "AVERAGE WORD LENGTH:", avg(inputs[i][1]), "ARTICLES RATIO:" ,articles(inputs[i][1]), "CATEGORY",targets[i])
+    # i+1, inputs[i][1], "AVERAGE WORD LENGTH:", avg(inputs[i][1]), "ARTICLES RATIO:" ,articles(inputs[i][1]), 
+    print("Certain Word Occurance", wordLookup(inputs[i][1], "The") ,"CATEGORY",targets[i])
     if i == len(inputs) - 1:
         print()
 
 
 
 def display_img(img):
+
     dark_black = '\u001B[40m  '
     light_black = '\u001B[100m  '
     dark_white = '\u001B[47m  '
