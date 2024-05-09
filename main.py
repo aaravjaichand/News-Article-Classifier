@@ -1,11 +1,9 @@
-from sklearn.neural_network import MLPClassifier
-from sklearn import datasets
-import numpy as np
 import json
 
+from sklearn.neural_network import MLPClassifier
+from sklearn import datasets
 
 f = open("News_Category_Dataset_v3.json", "r")
-
 
 categories = []
 inputs = []
@@ -21,50 +19,22 @@ for line in f:
     target = data["category"]
     inputs.append(input_)
     targets.append(target)
-    
+
     i += 1
     if i == int(rAmount):
         break
 
 for i in range(len(targets)):
-    if targets[i] not in categories: categories.append(targets[i]);
+    if targets[i] not in categories:
+        categories.append(targets[i])
+
 def preposition(string):
     prepositions = [
-    "in",
-    "on",
-    "at",
-    "of",
-    "to",
-    "with",
-    "by",
-    "for",
-    "about",
-    "from",
-    "into",
-    "onto",
-    "upon",
-    "within",
-    "without",
-    "through",
-    "during",
-    "among",
-    "between",
-    "above",
-    "below",
-    "under",
-    "over",
-    "underneath",
-    "around",
-    "near",
-    "after",
-    "before",
-    "behind",
-    "beside",
-    "inside",
-    "outside",
-    "since",
-    "until",
-    "upon"
+        "in", "on", "at", "of", "to", "with", "by", "for", "about", "from",
+        "into", "onto", "upon", "within", "without", "through", "during",
+        "among", "between", "above", "below", "under", "over", "underneath",
+        "around", "near", "after", "before", "behind", "beside", "inside",
+        "outside", "since", "until", "upon"
     ]
 
     prepositionCount = 0
@@ -73,24 +43,24 @@ def preposition(string):
     for word in sentence:
         if word.lower() in prepositions:
             prepositionCount += 1
-    
+
     if prepositionCount == 0 or sentenceLength == 0:
         return "Undefined"
     else:
-        return prepositionCount/sentenceLength
+        return prepositionCount / sentenceLength
+
 def upperLower(string):
-    
     upper = 0
     lower = 0
     for word in string:
         letters = list(word)
         for letter in letters:
-            
             if letter.isupper():
                 upper += 1
             else:
                 lower += 1
-    return upper/lower
+    return upper / lower
+
 def articles(string):
     wordList = string.split()
     the_a_count = 0
@@ -98,26 +68,25 @@ def articles(string):
     the_a_count += wordList.count("The") + wordList.count("the") + wordList.count("A") + wordList.count("a")
     if the_a_count == 0 or sentenceWC == 0:
         return "0"
-    articleRatio = the_a_count/sentenceWC
-
-    
+    articleRatio = the_a_count / sentenceWC
 
     return articleRatio
+
 def avg(string):
-
-
     wordList = string.split()
     totalNumLetters = 0
     totalWords = len(wordList)
     for i in range(len(wordList)):
         word = wordList[i]
-        totalNumLetters+=len(word)
+        totalNumLetters += len(word)
     if totalWords == 0 or totalNumLetters == 0:
         return "0"
-    avgWL = totalNumLetters/totalWords
+    avgWL = totalNumLetters / totalWords
     return avgWL
+
 def sentenceLen(string):
     return len(string.split())
+
 def wordLookup(string, word):
     stringSplit = string.split()
 
@@ -125,72 +94,29 @@ def wordLookup(string, word):
     for i in range(len(stringSplit)):
         if stringSplit[i].lower() == word.lower():
             count += 1
-    
     return count
 
 for i in range(len(inputs)):
     print()
-    # i+1, inputs[i][1], "AVERAGE WORD LENGTH:", avg(inputs[i][1]), "ARTICLES RATIO:" ,articles(inputs[i][1]), 
-    print("Certain Word Occurance", wordLookup(inputs[i][1], "The") ,"CATEGORY",targets[i])
+    # i+1, inputs[i][1], "AVERAGE WORD LENGTH:", avg(inputs[i][1]), "ARTICLES RATIO:" ,articles(inputs[i][1]),
+    print(
+        "Certain Word Occurance", wordLookup(inputs[i][1], "The"),
+        "CATEGORY", targets[i]
+    )
     if i == len(inputs) - 1:
         print()
 
-
-
-def display_img(img):
-
-    dark_black = '\u001B[40m  '
-    light_black = '\u001B[100m  '
-    dark_white = '\u001B[47m  '
-    light_white = '\u001B[107m  '
-    reset_color = '\u001B[0m'
-    percs = np.percentile(np.unique(img), (25, 50, 75))
-    for r in range(img.shape[0]):
-        for c in range(img.shape[1]):
-            print(
-                dark_black if img[r, c] <= percs[0]
-                else light_black if img[r, c] <= percs[1]
-                else dark_white if img[r, c] <= percs[2]
-                else light_white, end=""
-            )
-        print(reset_color)
-    print()
-
-def learn_digits():
-    # This just prints information about the dataset. Uncomment this `print` see the description
-    # print(digits_set.DESCR)
-
-    # This is the dataset:
-    # To get the inputs (pixels of each image) use `digits_set.data`
-    #     This returns (1797, 64) because there are 1797 images, and each one has 64 pixels
-    #     (each image is flattened into a 1D array to make them easier to ingest for the neural
-    #     network, as opposed to a 2D array which is easier to visualize)
-    # To get the intended outputs (the actual number that this is supposed to be a picture of) use `digits_set.target`
-    #     This returns a tuple (1797,) because there are 1797 labels (i.e. one for each image)
+def main():
     digits_set = datasets.load_digits()
     inputs = digits_set.data
     target = digits_set.target
-    print(f'Shape of input data array:  {inputs.shape}')
-    print(f'Shape of output data array: {target.shape}')
 
-    # This is the neural network
     classifier = MLPClassifier(random_state=0)
-    print()
     test_size = 10
 
-    # Train on all the data AFTER the first 10 (i.e. on 1787 images)
     classifier.fit(inputs[test_size:], target[test_size:])
 
-    # Test on ONLY the first 10 digits
-    # (which coincidentally are themselves the digits 1,2,3,4,5,6,7,8,9 in order)
     results = classifier.predict(inputs[:test_size])
 
-    # Print to the terminal the results
-    for i in range(len(results)):
-        print('Neural Net guessed: ' + str(results[i]))
-        print('Actual value: ' + str(target[i]))
-        img = inputs[i].reshape(8, 8)  # reshape to look like an 8x8 image
-        display_img(img)
-
 if __name__ == '__main__':
-    learn_digits()
+    main()
