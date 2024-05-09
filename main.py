@@ -79,7 +79,7 @@ def preposition(string):
     else:
         return prepositionCount/sentenceLength
 def upperLower(string):
-    listFormat = string.split()
+    
     upper = 0
     lower = 0
     for word in string:
@@ -192,5 +192,5 @@ def learn_digits():
         img = inputs[i].reshape(8, 8)  # reshape to look like an 8x8 image
         display_img(img)
 
-# if __name__ == '__main__':
-#     learn_digits()
+if __name__ == '__main__':
+    learn_digits()
