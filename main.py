@@ -1,32 +1,7 @@
 import json
 
+import numpy as np
 from sklearn.neural_network import MLPClassifier
-from sklearn import datasets
-
-f = open("News_Category_Dataset_v3.json", "r")
-
-categories = []
-inputs = []
-targets = []
-
-i = 0
-
-rAmount = input("Amount of lines to be read in: ")
-
-for line in f:
-    data = json.loads(line)
-    input_ = [data["headline"], data["short_description"]]
-    target = data["category"]
-    inputs.append(input_)
-    targets.append(target)
-
-    i += 1
-    if i == int(rAmount):
-        break
-
-for i in range(len(targets)):
-    if targets[i] not in categories:
-        categories.append(targets[i])
 
 def preposition(string):
     prepositions = [
@@ -45,7 +20,7 @@ def preposition(string):
             prepositionCount += 1
 
     if prepositionCount == 0 or sentenceLength == 0:
-        return "Undefined"
+        return 0
     else:
         return prepositionCount / sentenceLength
 
@@ -67,7 +42,7 @@ def articles(string):
     sentenceWC = len(wordList)
     the_a_count += wordList.count("The") + wordList.count("the") + wordList.count("A") + wordList.count("a")
     if the_a_count == 0 or sentenceWC == 0:
-        return "0"
+        return 0
     articleRatio = the_a_count / sentenceWC
 
     return articleRatio
@@ -80,43 +55,38 @@ def avg(string):
         word = wordList[i]
         totalNumLetters += len(word)
     if totalWords == 0 or totalNumLetters == 0:
-        return "0"
+        return 0
     avgWL = totalNumLetters / totalWords
     return avgWL
 
 def sentenceLen(string):
     return len(string.split())
 
-def wordLookup(string, word):
-    stringSplit = string.split()
-
-    count = 0
-    for i in range(len(stringSplit)):
-        if stringSplit[i].lower() == word.lower():
-            count += 1
-    return count
-
-for i in range(len(inputs)):
-    print()
-    # i+1, inputs[i][1], "AVERAGE WORD LENGTH:", avg(inputs[i][1]), "ARTICLES RATIO:" ,articles(inputs[i][1]),
-    print(
-        "Certain Word Occurance", wordLookup(inputs[i][1], "The"),
-        "CATEGORY", targets[i]
-    )
-    if i == len(inputs) - 1:
-        print()
-
 def main():
-    digits_set = datasets.load_digits()
-    inputs = digits_set.data
-    target = digits_set.target
+    str_inputs = []
+    targets = []
 
+    rAmount = int(input("Amount of lines to be read in: "))
+    test_size = int(rAmount * .1)
+
+    for i, line in enumerate(open("News_Category_Dataset_v3.json", "r")):
+        data = json.loads(line)
+        str_inputs.append(data["headline"] + data["short_description"])
+        targets.append(data["category"])
+        if i == rAmount:
+            break
+
+    feature_funcs = [preposition, upperLower, articles, avg, sentenceLen]
+    inputs = np.array([
+        [feature_func(inp) for feature_func in feature_funcs]
+        for inp in str_inputs
+    ])
+    targets = np.array(targets)
     classifier = MLPClassifier(random_state=0)
-    test_size = 10
-
-    classifier.fit(inputs[test_size:], target[test_size:])
-
+    classifier.fit(inputs[test_size:], targets[test_size:])
     results = classifier.predict(inputs[:test_size])
+
+    print(f'Accuracy: {np.mean(results == targets[:test_size])}')
 
 if __name__ == '__main__':
     main()
