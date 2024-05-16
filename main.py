@@ -4,6 +4,7 @@ import numpy as np
 from sklearn.neural_network import MLPClassifier
 from tqdm import tqdm
 
+
 def preposition(string):
     prepositions = [
         "in", "on", "at", "of", "to", "with", "by", "for", "about", "from",
@@ -25,6 +26,7 @@ def preposition(string):
     else:
         return prepositionCount / sentenceLength
 
+
 def upperLower(string):
     upper = 0
     lower = 0
@@ -37,16 +39,19 @@ def upperLower(string):
                 lower += 1
     return upper / lower
 
+
 def articles(string):
     wordList = string.split()
     the_a_count = 0
     sentenceWC = len(wordList)
-    the_a_count += wordList.count("The") + wordList.count("the") + wordList.count("A") + wordList.count("a")
+    the_a_count += wordList.count("The") + wordList.count("the") + \
+        wordList.count("A") + wordList.count("a")
     if the_a_count == 0 or sentenceWC == 0:
         return 0
     articleRatio = the_a_count / sentenceWC
 
     return articleRatio
+
 
 def avg(string):
     wordList = string.split()
@@ -60,14 +65,16 @@ def avg(string):
     avgWL = totalNumLetters / totalWords
     return avgWL
 
+
 def sentenceLen(string):
     return len(string.split())
+
 
 def main():
     str_inputs = []
     targets = []
 
-    rAmount = int(input("Amount of lines to be read in: "))
+    rAmount = 60000
     test_size = int(rAmount * .1)
 
     for i, line in tqdm(
@@ -85,12 +92,20 @@ def main():
         [feature_func(inp) for feature_func in feature_funcs]
         for inp in tqdm(str_inputs, desc='Processing features...')
     ])
+    # np.save("inputs.out.npy", inputs)
     targets = np.array(targets)
-    classifier = MLPClassifier(random_state=0, verbose=1)
+    # np.save("targets.out.npy", targets)
+    classifier = MLPClassifier(random_state=3, hidden_layer_sizes=(
+        50, 10, 50), learning_rate_init=0.003, batch_size=60000, verbose=1, max_iter=300)
+    # np.load("inputs.out.npy", inputs)
+    # np.load("targets.out.npy", targets)
     classifier.fit(inputs[test_size:], targets[test_size:])
+    print(classifier.loss_curve_)
+    
     results = classifier.predict(inputs[:test_size])
 
     print(f'Accuracy: {np.mean(results == targets[:test_size])}')
+
 
 if __name__ == '__main__':
     main()
