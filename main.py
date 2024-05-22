@@ -73,29 +73,27 @@ def avg(string):
 def sentenceLen(string):
     return len(string.split())
 
-
-def main():
+def get_data():
     str_inputs = []
     targets = []
 
-    rAmount = 50000
-    test_size = int(rAmount * .1)
-
-    for i, line in tqdm(
-            list(enumerate(open("News_Category_Dataset_v3.json", "r"))),
+    for line in tqdm(
+            list(open("News_Category_Dataset_v3.json", "r")),
             desc='Loading json...'
     ):
         data = json.loads(line)
-        str_inputs.append(data["headline"] + data["short_description"])
+        str_inputs.append(data["headline"] + '. ' + data["short_description"])
         targets.append(data["category"])
-        if i == rAmount:
-            break
 
     feature_funcs = [preposition, upperLower, articles, avg, sentenceLen]
     inputs = np.array([
         [feature_func(inp) for feature_func in feature_funcs]
         for inp in tqdm(str_inputs, desc='Processing features...')
     ])
+    return inputs, targets
+
+def main():
+    inputs, targets = get_data()
 
     # targets = np.array(targets)
     # m = RandomForestClassifier(
@@ -103,6 +101,7 @@ def main():
     # m.fit(inputs[test_size:], targets[test_size:])
     # results = m.predict(inputs[:test_size])
 
+    test_size = int(len(inputs) * 0.1)
     classifier = MLPClassifier(random_state=1, hidden_layer_sizes=(
         10, 10, 50), learning_rate_init=0.005, batch_size=test_size, max_iter=300, verbose=1)
     classifier.fit(inputs[test_size:], targets[test_size:])
