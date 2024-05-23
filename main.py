@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import numpy as np
 from sklearn.neural_network import MLPClassifier
@@ -74,22 +75,30 @@ def sentenceLen(string):
     return len(string.split())
 
 def get_data():
-    str_inputs = []
-    targets = []
+    saved_file = Path('saved_data.npz')
+    if not saved_file.exists():
+        str_inputs = []
+        targets = []
 
-    for line in tqdm(
-            list(open("News_Category_Dataset_v3.json", "r")),
-            desc='Loading json...'
-    ):
-        data = json.loads(line)
-        str_inputs.append(data["headline"] + '. ' + data["short_description"])
-        targets.append(data["category"])
+        for line in tqdm(
+                list(open("News_Category_Dataset_v3.json", "r")),
+                desc='Loading json...'
+        ):
+            data = json.loads(line)
+            str_inputs.append(data["headline"] + '. ' + data["short_description"])
+            targets.append(data["category"])
 
-    feature_funcs = [preposition, upperLower, articles, avg, sentenceLen]
-    inputs = np.array([
-        [feature_func(inp) for feature_func in feature_funcs]
-        for inp in tqdm(str_inputs, desc='Processing features...')
-    ])
+        feature_funcs = [preposition, upperLower, articles, avg, sentenceLen]
+        inputs = np.array([
+            [feature_func(inp) for feature_func in feature_funcs]
+            for inp in tqdm(str_inputs, desc='Processing features...')
+        ])
+        targets = np.array(targets)
+        np.savez(saved_file, inputs=inputs, targets=targets)
+    else:
+        arr = np.load(saved_file)
+        inputs = arr['inputs']
+        targets = arr['targets']
     return inputs, targets
 
 def main():
