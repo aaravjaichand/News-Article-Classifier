@@ -5,6 +5,8 @@ import numpy as np
 from sklearn.neural_network import MLPClassifier
 from tqdm import tqdm
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
+import matplotlib.pyplot as plt
 
 def preposition(string):
     prepositions = [
@@ -85,7 +87,7 @@ def get_data():
                 desc='Loading json...'
         ):
             data = json.loads(line)
-            str_inputs.append(data["headline"] + '. ' + data["short_description"])
+            inputs.append(data["headline"] + '. ' + data["short_description"])
             targets.append(data["category"])
 
         feature_funcs = [preposition, upperLower, articles, avg, sentenceLen]
@@ -101,6 +103,15 @@ def get_data():
         targets = arr['targets']
     return inputs, targets
 
+
+def display_accuracy(target, predictions, labels, plot_title):
+    cm = confusion_matrix(target, predictions)
+    unique_labels = np.unique(target)
+    cm_display = ConfusionMatrixDisplay(cm, display_labels=unique_labels)
+    fig, ax = plt.subplots()
+    cm_display.plot(ax=ax)
+    ax.set_title(plot_title)
+    plt.show()
 def main():
     inputs, targets = get_data()
 
@@ -116,7 +127,7 @@ def main():
     classifier.fit(inputs[test_size:], targets[test_size:])
     print("Min loss:", min(classifier.loss_curve_))
     results = classifier.predict(inputs[:test_size])
-
+    display_accuracy(targets[:test_size], results, np.unique(targets), "Confusion Matrix")
     print(f'Accuracy: {np.mean(results == targets[:test_size])}')
 
 
