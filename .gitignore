@@ -385,3 +385,5 @@ $RECYCLE.BIN/
 *.jpg
 *.jpeg
 *.csv
+
+*.npz
