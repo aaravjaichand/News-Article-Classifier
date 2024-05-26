@@ -122,13 +122,27 @@ def main():
     # results = m.predict(inputs[:test_size])
 
     test_size = int(len(inputs) * 0.1)
-    classifier = MLPClassifier(random_state=1, hidden_layer_sizes=(
-        10, 10, 50), learning_rate_init=0.005, batch_size=test_size, max_iter=300, verbose=1)
-    classifier.fit(inputs[test_size:], targets[test_size:])
-    print("Min loss:", min(classifier.loss_curve_))
-    results = classifier.predict(inputs[:test_size])
-    display_accuracy(targets[:test_size], results, np.unique(targets), "Confusion Matrix")
-    print(f'Accuracy: {np.mean(results == targets[:test_size])}')
+    
+
+    lrs = [0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11, 0.12]
+    accs = []
+    i = 1
+    for lr in lrs:
+        classifier = MLPClassifier(random_state=1, hidden_layer_sizes=(
+        10, 10, 50), learning_rate_init=lr, batch_size=test_size, max_iter=20, verbose=0)
+        classifier.fit(inputs[test_size:], targets[test_size:])
+
+
+        results = classifier.predict(inputs[:test_size])
+        print(i, "of", len(lrs))
+        i+=1
+        acc = np.mean(results == targets[:test_size])
+        accs.append(acc)
+    plt.plot(lrs, accs)
+    plt.show()
+    # display_accuracy(targets[:test_size], results, np.unique(targets), "Confusion Matrix")
+    # print("Min loss:", min(classifier.loss_curve_))
+    # print(f'Accuracy: {np.mean(results == targets[:test_size])}')
 
 
 if __name__ == '__main__':
