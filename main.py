@@ -116,10 +116,10 @@ def main():
     inputs, targets = get_data()
 
     
-    m = RandomForestClassifier(
-        random_state=12, n_estimators=70, max_depth=5, verbose=1)
-    m.fit(inputs[test_size:], targets[test_size:])
-    results = m.predict(inputs[:test_size])
+    # m = RandomForestClassifier(
+    #     random_state=12, n_estimators=70, max_depth=5, verbose=1)
+    # m.fit(inputs[test_size:], targets[test_size:])
+    # results = m.predict(inputs[:test_size])
 
     test_size = int(len(inputs) * 0.1)
     
@@ -142,11 +142,12 @@ def main():
     plt.show()
 
     optimalLR = lrs[accs.index(max(accs))]
+    print("Best LR teste was", optimalLR)
     classifier = MLPClassifier(random_state=1, hidden_layer_sizes=(
         10, 10, 50), learning_rate_init=optimalLR, batch_size=test_size, max_iter=20, verbose=1)
     classifier.fit(inputs[test_size:], targets[test_size:])
     results = classifier.predict(inputs[:test_size])
-    display_accuracy(targets[:test_size], results, np.unique(targets), "Confusion Matrix")
+    display_accuracy(targets[:test_size], results, np.unique(targets), "Confusion Matrix (Close to view accuracy)")
     print("Min loss:", min(classifier.loss_curve_))
     print(f'Accuracy: {np.mean(results == targets[:test_size])}')
 
