@@ -142,7 +142,7 @@ def main():
     plt.show()
 
     optimalLR = lrs[accs.index(max(accs))]
-    print("Best LR teste was", optimalLR)
+    print("Best LR tested was", optimalLR)
     classifier = MLPClassifier(random_state=1, hidden_layer_sizes=(
         10, 10, 50), learning_rate_init=optimalLR, batch_size=test_size, max_iter=20, verbose=1)
     classifier.fit(inputs[test_size:], targets[test_size:])
