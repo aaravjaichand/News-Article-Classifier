@@ -78,22 +78,29 @@ def sentenceLen(string):
 
 def get_data():
     saved_file = Path('saved_data.npz')
+    acceptedCats = ["WORLD NEWS", "POLITICS", "ENTERTAINMENT"]
     if not saved_file.exists():
-        str_inputs = []
+        
         targets = []
 
         for line in tqdm(
                 list(open("News_Category_Dataset_v3.json", "r")),
                 desc='Loading json...'
         ):
+            
             data = json.loads(line)
-            inputs.append(data["headline"] + '. ' + data["short_description"])
-            targets.append(data["category"])
+            category = data["category"]
+            headline = data["headline"]
+            short_desc = data["short_description"]
+            if category in acceptedCats:
+                inputs.append(headline + '. ' +short_desc)
+                targets.append(category)
+
 
         feature_funcs = [preposition, upperLower, articles, avg, sentenceLen]
         inputs = np.array([
             [feature_func(inp) for feature_func in feature_funcs]
-            for inp in tqdm(str_inputs, desc='Processing features...')
+            for inp in tqdm(inputs, desc='Processing features...')
         ])
         targets = np.array(targets)
         np.savez(saved_file, inputs=inputs, targets=targets)
@@ -124,12 +131,12 @@ def main():
     test_size = int(len(inputs) * 0.1)
     
 
-    lrs = [0.01, 0.02, 0.03, 0.04]
+    lrs = np.logspace(-4, -1, 4)
     accs = []
     i = 1
     for lr in lrs:
         classifier = MLPClassifier(random_state=1, hidden_layer_sizes=(
-        10, 10, 50), learning_rate_init=lr, batch_size=test_size*0.1, max_iter=20, verbose=0)
+        10, 10, 50), learning_rate_init=lr, batch_size=test_size, max_iter=20, verbose=1)
         classifier.fit(inputs[test_size:], targets[test_size:])
 
 
@@ -144,7 +151,7 @@ def main():
     optimalLR = lrs[accs.index(max(accs))]
     print("Best LR tested was", optimalLR)
     classifier = MLPClassifier(random_state=1, hidden_layer_sizes=(
-        10, 10, 50), learning_rate_init=optimalLR, batch_size=test_size*0.1, max_iter=20, verbose=1)
+        10, 10, 50), learning_rate_init=optimalLR, batch_size=test_size, max_iter=20, verbose=1)
     classifier.fit(inputs[test_size:], targets[test_size:])
     results = classifier.predict(inputs[:test_size])
     display_accuracy(targets[:test_size], results, np.unique(targets), "Confusion Matrix (Close to view accuracy)")
