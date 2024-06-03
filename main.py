@@ -129,7 +129,7 @@ def main():
     i = 1
     for lr in lrs:
         classifier = MLPClassifier(random_state=1, hidden_layer_sizes=(
-        10, 10, 50), learning_rate_init=lr, batch_size=test_size, max_iter=20, verbose=0)
+        10, 10, 50), learning_rate_init=lr, batch_size=test_size*0.1, max_iter=20, verbose=0)
         classifier.fit(inputs[test_size:], targets[test_size:])
 
 
@@ -144,7 +144,7 @@ def main():
     optimalLR = lrs[accs.index(max(accs))]
     print("Best LR tested was", optimalLR)
     classifier = MLPClassifier(random_state=1, hidden_layer_sizes=(
-        10, 10, 50), learning_rate_init=optimalLR, batch_size=test_size, max_iter=20, verbose=1)
+        10, 10, 50), learning_rate_init=optimalLR, batch_size=test_size*0.1, max_iter=20, verbose=1)
     classifier.fit(inputs[test_size:], targets[test_size:])
     results = classifier.predict(inputs[:test_size])
     display_accuracy(targets[:test_size], results, np.unique(targets), "Confusion Matrix (Close to view accuracy)")
