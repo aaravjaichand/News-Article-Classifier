@@ -81,7 +81,6 @@ acceptedCats = ["WORLD NEWS", "POLITICS", "ENTERTAINMENT"]
 def get_data():
     saved_file = Path('saved_data.npz')
 
-
     if not saved_file.exists():
         inputs = []
         targets = []
@@ -107,12 +106,11 @@ def get_data():
             for inp in tqdm(inputs, desc='Processing features...')
         ])
         targets = np.array(targets)
-        np.savez(saved_file, inputs=inputs, targets=targets, list_of_strings=list_of_strings)
+        np.savez(saved_file, inputs=inputs, targets=targets)
     else:
         arr = np.load(saved_file)
         inputs = arr['inputs']
         targets = arr['targets']
-        list_of_strings = arr["list_of_strings"]
     return inputs, targets, list_of_strings
 
 
