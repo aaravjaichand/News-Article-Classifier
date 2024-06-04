@@ -85,6 +85,7 @@ def display_accuracy(target, predictions, labels, plot_title):
 
 def get_data():
     global acceptedCats
+    global acceptedCats1
     acceptedCats = ["WORLD NEWS", "POLITICS", "ENTERTAINMENT"]
     acceptedCats1 = []
     saved_file = Path('saved_data.npz')
@@ -178,8 +179,8 @@ def main():
 
     model = pipeline("zero-shot-classification", model="MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli")
     article = input("Enter article to be categorized: ")
-    results = model(article, candidate_labels=acceptedCats, verbose=0)  
-
+    results = model(article, candidate_labels=acceptedCats1, verbose=0)  
+    
     scores = results["scores"]
     labs = results["labels"]
     
