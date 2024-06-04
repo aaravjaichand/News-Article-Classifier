@@ -30,8 +30,7 @@ def preposition(string):
         return 0
     else:
         return prepositionCount / sentenceLength
-
-
+    
 def upperLower(string):
     upper = 0
     lower = 0
@@ -47,7 +46,6 @@ def upperLower(string):
     
     return upper / lower
 
-
 def articles(string):
     wordList = string.split()
     the_a_count = 0
@@ -61,7 +59,6 @@ def articles(string):
 
     return articleRatio
 
-
 def avg(string):
     wordList = string.split()
     totalNumLetters = 0
@@ -74,17 +71,44 @@ def avg(string):
     avgWL = totalNumLetters / totalWords
     return avgWL
 
-
 def sentenceLen(string):
     return len(string.split())
-acceptedCats = ["WORLD NEWS", "POLITICS", "ENTERTAINMENT"]
-def get_data():
-    saved_file = Path('saved_data.npz')
 
+def display_accuracy(target, predictions, labels, plot_title):
+    cm = confusion_matrix(target, predictions)
+    unique_labels = np.unique(target)
+    cm_display = ConfusionMatrixDisplay(cm, display_labels=unique_labels)
+    fig, ax = plt.subplots()
+    cm_display.plot(ax=ax)
+    ax.set_title(plot_title)
+    plt.show()
+
+def get_data():
+    global acceptedCats
+    acceptedCats = ["WORLD NEWS", "POLITICS", "ENTERTAINMENT"]
+    acceptedCats1 = []
+    saved_file = Path('saved_data.npz')
+    list_of_strings = []
+    amount = 15000
+
+    i = 0
+    for line in (list(open("News_Category_Dataset_v3.json", "r"))):
+            data = json.loads(line)
+            headline = data["headline"]
+            short_desc = data["short_description"]
+            category = data["category"]
+            acceptedCats1.append(category)
+
+            if category in acceptedCats:
+                list_of_strings.append(headline + '. ' +short_desc)
+
+            if i == 1:
+                break
+    acceptedCats1 = np.unique(acceptedCats1)
     if not saved_file.exists():
         inputs = []
         targets = []
-        list_of_strings = []
+        
         for line in tqdm(
                 list(open("News_Category_Dataset_v3.json", "r")),
                 desc='Loading json...'
@@ -95,7 +119,6 @@ def get_data():
             headline = data["headline"]
             short_desc = data["short_description"]
             if category in acceptedCats:
-                list_of_strings.append(headline + '. ' +short_desc)
                 inputs.append(headline + '. ' +short_desc)
                 targets.append(category)
 
@@ -111,17 +134,8 @@ def get_data():
         arr = np.load(saved_file)
         inputs = arr['inputs']
         targets = arr['targets']
+        
     return inputs, targets, list_of_strings
-
-
-def display_accuracy(target, predictions, labels, plot_title):
-    cm = confusion_matrix(target, predictions)
-    unique_labels = np.unique(target)
-    cm_display = ConfusionMatrixDisplay(cm, display_labels=unique_labels)
-    fig, ax = plt.subplots()
-    cm_display.plot(ax=ax)
-    ax.set_title(plot_title)
-    plt.show()
 def main():
     inputs, targets, list_of_strings = get_data()
     test_size = int(len(inputs) * 0.1)
@@ -131,6 +145,8 @@ def main():
     #     random_state=12, n_estimators=70, max_depth=5, verbose=1)
     # m.fit(inputs[test_size:], targets[test_size:])
     # results = m.predict(inputs[:test_size])
+
+
 
     # MLP Classifier
     # lrs = np.logspace(-4, -1, 4)
@@ -161,11 +177,17 @@ def main():
     
 
     model = pipeline("zero-shot-classification", model="MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli")
-    results = model.predict(list_of_strings, labels=np.unique(targets))
+    article = input("Enter article to be categorized: ")
+    results = model(article, candidate_labels=acceptedCats, verbose=0)  
+
+    scores = results["scores"]
+    labs = results["labels"]
+    
+    print("Predicted Label:", labs[scores.index(max(scores))])
 
     
     
-    print(f'Accuracy: {np.mean(results == targets[:test_size])}')
+    # print(f'Accuracy: {np.mean(results == targets[:test_size])}')
 
 
 if __name__ == '__main__':
