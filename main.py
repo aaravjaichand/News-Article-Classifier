@@ -11,6 +11,9 @@ from transformers import pipeline
 
 from features import preposition, upperLower, articles, avg, sentenceLen
 
+acceptedCats = ["POLITICS", "WELLNESS", "ENTERTAINMENT"]
+
+
 def display_accuracy(target, predictions, labels, plot_title):
     cm = confusion_matrix(target, predictions)
     unique_labels = np.unique(target)
@@ -20,31 +23,36 @@ def display_accuracy(target, predictions, labels, plot_title):
     ax.set_title(plot_title)
     plt.show()
 
-def get_data():
-    global acceptedCats
-    global acceptedCats1
-    acceptedCats = ["WORLD NEWS", "POLITICS", "ENTERTAINMENT"]
-    acceptedCats1 = []
-    saved_file = Path('saved_data.npz')
-    list_of_strings = []
 
-    i = 0
+def get_data():
+    allCategories = []
+    allHeadlines = []
+    allTargets = []
+    filteredHeadlines = []
+    filteredTargets = []
+
+
+
     for line in (list(open("News_Category_Dataset_v3.json", "r"))):
         data = json.loads(line)
         headline = data["headline"]
         short_desc = data["short_description"]
         category = data["category"]
-        acceptedCats1.append(category)
+        allCategories.append(category)
+        allHeadlines.append([headline + " " + short_desc])
+
 
         if category in acceptedCats:
-            list_of_strings.append(headline + '. ' + short_desc)
+            filteredHeadlines.append(headline + short_desc)
+            filteredTargets.append(category)
 
-        if i == 1:
-            break
-    acceptedCats1 = np.unique(acceptedCats1)
+    allTargets = allCategories
+    allCategories = np.unique(allCategories)
+
+    saved_file = Path('saved_data.npz')
     if not saved_file.exists():
         inputs = []
-        targets = []
+
 
         for line in tqdm(
                 list(open("News_Category_Dataset_v3.json", "r")),
@@ -52,35 +60,33 @@ def get_data():
         ):
 
             data = json.loads(line)
-            category = data["category"]
             headline = data["headline"]
             short_desc = data["short_description"]
             if category in acceptedCats:
                 inputs.append(headline + '. ' + short_desc)
-                targets.append(category)
+
 
         feature_funcs = [preposition, upperLower, articles, avg, sentenceLen]
         inputs = np.array([
             [feature_func(inp) for feature_func in feature_funcs]
             for inp in tqdm(inputs, desc='Processing features...')
         ])
-        targets = np.array(targets)
-        np.savez(saved_file, inputs=inputs, targets=targets)
+        filteredTargets = np.array(filteredTargets)
+        np.savez(saved_file, inputs=inputs, filteredTargets=filteredTargets)
     else:
         arr = np.load(saved_file)
         inputs = arr['inputs']
-        targets = arr['targets']
 
-    return inputs, targets, list_of_strings
+    return inputs, allTargets, allHeadlines, allCategories, filteredHeadlines, filteredTargets
 
 def sklearn_model():
-    inputs, targets, list_of_strings = get_data()
+    inputs, allTargets, allHeadlines, allCategories, filteredHeadlines, filteredTargets = get_data()
     test_size = int(len(inputs) * 0.1)
 
     # Random Forest Classifier:
     m = RandomForestClassifier(
         random_state=12, n_estimators=70, max_depth=5, verbose=1)
-    m.fit(inputs[test_size:], targets[test_size:])
+    m.fit(inputs[test_size:], filteredTargets[test_size:])
     results = m.predict(inputs[:test_size])
 
     # MLP Classifier
@@ -92,11 +98,11 @@ def sklearn_model():
             random_state=1, hidden_layer_sizes=(10, 10, 50),
             learning_rate_init=lr, batch_size=test_size, max_iter=20, verbose=1
         )
-        classifier.fit(inputs[test_size:], targets[test_size:])
+        classifier.fit(inputs[test_size:], filteredTargets[test_size:])
         results = classifier.predict(inputs[:test_size])
         print(i, "of", len(lrs))
         i += 1
-        acc = np.mean(results == targets[:test_size])
+        acc = np.mean(results == filteredTargets[:test_size])
         accs.append(acc)
     plt.plot(lrs, accs)
     plt.show()
@@ -108,33 +114,89 @@ def sklearn_model():
         learning_rate_init=optimalLR, batch_size=test_size, max_iter=20,
         verbose=1
     )
-    classifier.fit(inputs[test_size:], targets[test_size:])
+    classifier.fit(inputs[test_size:], filteredTargets[test_size:])
     results = classifier.predict(inputs[:test_size])
     display_accuracy(
-        targets[:test_size], results, np.unique(targets),
+        filteredTargets[:test_size], results, np.unique(filteredTargets),
         "Confusion Matrix (Close to view accuracy)"
     )
     print("Min loss:", min(classifier.loss_curve_))
 
 def deep_learning_model():
+    inputs, allTargets, allHeadlines, allCategories, filteredHeadlines, filteredTargets = get_data()
+
 
     model = pipeline(
         "zero-shot-classification",
         model="MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli"
     )
-    article = input("Enter article to be categorized: ")
-    results = model(article, candidate_labels=acceptedCats1, verbose=0)
 
-    scores = results["scores"]
-    labs = results["labels"]
+    modelToUse = 1
 
-    print("Predicted Label:", labs[scores.index(max(scores))])
+    num_batches = 30
+    batch_size = 100
 
-    # print(f'Accuracy: {np.mean(results == targets[:test_size])}')
+    if modelToUse == 1:
+        correct = 0
+        total = num_batches * batch_size
+        for i in tqdm(range(num_batches)):
+
+            start = i*batch_size
+            end = start + batch_size
+
+            if end > total:
+                break
+
+            results = model(
+                filteredHeadlines[start:end], candidate_labels=acceptedCats, verbose=1)
+
+            for j in range(batch_size):
+                prediction = results[j]["labels"]
+
+                if prediction[0] == filteredTargets[j]:
+                    correct += 1
+        print("Accuracy:", correct/total)
+
+    if modelToUse == 2:
+        correct = 0
+        total = num_batches * batch_size
+        for i in range(num_batches):
+
+            start = i*batch_size
+            end = start + batch_size
+
+            if end > total:
+                break
+
+            results = model(allHeadlines[start:end],
+                            candidate_labels=allCategories, verbose=1)
+
+            for j in range(batch_size):
+                prediction = results[j]["labels"]
+
+                if prediction[0] == allTargets[j]:
+                    correct += 1
+    if "TRAVEL" in filteredTargets:
+        print("CHECK 1")
+    if "STYLE & BEAUTY" in filteredTargets:
+        print("CHECK 2")
+
+    return correct//total
 
 def main():
-    # sklearn_model()
-    deep_learning_model()
+    listAccuracy = []
+    listTopCategories = ["POLITICS", "WELLNESS", "ENTERTAINMENT", "TRAVEL", "STYLE & BEAUTY"]
+
+    listAccuracy.append(deep_learning_model())
+    acceptedCats.append("TRAVEL")
+
+    listAccuracy.append(deep_learning_model())
+    acceptedCats.append("STYLE & BEAUTY")
+
+    listAccuracy.append(deep_learning_model())
+
+    plt.plot([3, 4, 5], listAccuracy)
+    plt.show()
 
 if __name__ == '__main__':
     main()
