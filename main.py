@@ -125,7 +125,6 @@ def sklearn_model():
 def deep_learning_model():
     inputs, allTargets, allHeadlines, allCategories, filteredHeadlines, filteredTargets = get_data()
 
-
     model = pipeline(
         "zero-shot-classification",
         model="MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli"
@@ -133,8 +132,8 @@ def deep_learning_model():
 
     modelToUse = 1
 
-    num_batches = 30
-    batch_size = 100
+    num_batches = 17
+    batch_size = 30
 
     if modelToUse == 1:
         correct = 0
@@ -155,7 +154,7 @@ def deep_learning_model():
 
                 if prediction[0] == filteredTargets[j]:
                     correct += 1
-        print("Accuracy:", correct/total)
+        return correct/total
 
     if modelToUse == 2:
         correct = 0
@@ -184,19 +183,40 @@ def deep_learning_model():
     return correct//total
 
 def main():
-    listAccuracy = []
-    listTopCategories = ["POLITICS", "WELLNESS", "ENTERTAINMENT", "TRAVEL", "STYLE & BEAUTY"]
+    accuracies = []
 
-    listAccuracy.append(deep_learning_model())
+    accuracy = deep_learning_model()
+    accuracies.append(accuracy)
+    print(accuracy)
+
     acceptedCats.append("TRAVEL")
+    accuracy = deep_learning_model()
+    accuracies.append(accuracy)
+    print(accuracy)
 
-    listAccuracy.append(deep_learning_model())
+    
+
     acceptedCats.append("STYLE & BEAUTY")
+    accuracy = deep_learning_model()
+    accuracies.append(accuracy)
+    print(accuracy)
 
-    listAccuracy.append(deep_learning_model())
-
-    plt.plot([3, 4, 5], listAccuracy)
+    
+    plt.plot([3, 4, 5], accuracies)
     plt.show()
+    # listAccuracy = []
+    # listTopCategories = ["POLITICS", "WELLNESS", "ENTERTAINMENT", "TRAVEL", "STYLE & BEAUTY"]
+    
+    # listAccuracy.append(deep_learning_model())
+
+    # acceptedCats.append("TRAVEL")
+    # listAccuracy.append(deep_learning_model())
+
+    # acceptedCats.append("STYLE & BEAUTY")
+    # listAccuracy.append(deep_learning_model())
+
+    # plt.plot([3, 4, 5], listAccuracy)
+    # plt.show()
 
 if __name__ == '__main__':
     main()
