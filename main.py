@@ -7,13 +7,13 @@ from tqdm import tqdm
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
 import matplotlib.pyplot as plt
+import torch
 from transformers import pipeline
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, AutoModel
 
 from features import preposition, upperLower, articles, avg, sentenceLen
 
 acceptedCats = ["POLITICS", "WELLNESS", "ENTERTAINMENT"]
-
-
 def display_accuracy(target, predictions, labels, plot_title):
     cm = confusion_matrix(target, predictions)
     unique_labels = np.unique(target)
@@ -22,8 +22,6 @@ def display_accuracy(target, predictions, labels, plot_title):
     cm_display.plot(ax=ax)
     ax.set_title(plot_title)
     plt.show()
-
-
 def get_data():
     allCategories = []
     allHeadlines = []
@@ -78,7 +76,6 @@ def get_data():
         inputs = arr['inputs']
 
     return inputs, allTargets, allHeadlines, allCategories, filteredHeadlines, filteredTargets
-
 def sklearn_model():
     inputs, allTargets, allHeadlines, allCategories, filteredHeadlines, filteredTargets = get_data()
     test_size = int(len(inputs) * 0.1)
@@ -121,7 +118,6 @@ def sklearn_model():
         "Confusion Matrix (Close to view accuracy)"
     )
     print("Min loss:", min(classifier.loss_curve_))
-
 def deep_learning_model():
     inputs, allTargets, allHeadlines, allCategories, filteredHeadlines, filteredTargets = get_data()
 
@@ -181,8 +177,71 @@ def deep_learning_model():
         print("CHECK 2")
 
     return correct//total
+def directlyLoadedModel():
+    inputs, allTargets, allHeadlines, allCategories, filteredHeadlines, filteredTargets = get_data()
+    
+    tokenizer = AutoTokenizer.from_pretrained(
+        "MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli"
+        )
+    
+    model = AutoModelForSequenceClassification.from_pretrained(
+        "MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli"
+                                                               )
+    
+    
 
-def main():
+    savedFile = Path("saved_embeddings")
+    
+    if not savedFile.exists():
+        batchSize = 10000
+        headlines = filteredHeadlines[:batchSize + 1]
+        with torch.inference_mode():
+            last_hidden_states = model(**tokenizer(headlines, return_tensors='pt', padding=True, truncation=True), output_hidden_states=True).hidden_states[0].mean(axis=1)
+            last_hidden_states_labels = model(**tokenizer(acceptedCats, return_tensors='pt', padding=True, truncation=True), output_hidden_states=True).hidden_states[0].mean(axis=1)
+            np.savez(savedFile, lhs=last_hidden_states, lhsl=last_hidden_states_labels)
+    else:
+        arr = np.load(savedFile)
+        last_hidden_states = arr["lhs"]
+        last_hidden_states_labels = arr["lhsl"]
+
+        correct = 0
+
+
+        for i in range(batchSize):
+            probabilities = (last_hidden_states[i] @ last_hidden_states_labels).softmax(0)
+            prediction = acceptedCats[probabilities[0].index(max(probabilities[0]))]
+            target = filteredTargets[i]
+
+            if prediction == target:
+                correct += 1
+def sentence_transformers():
+    inputs, allTargets, allHeadlines, allCategories, filteredHeadlines, filteredTargets = get_data()
+
+    with torch.inference_mode():
+        tokenizer = AutoTokenizer.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
+        model = AutoModel.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
+
+    batch_size = 10
+    headlines = filteredHeadlines[:30]
+    last_hidden_states = model(**tokenizer(headlines, return_tensors='pt', padding=True, truncation=True), output_hidden_states=True).hidden_states[0].mean(axis=1)
+    last_hidden_states_labels = model(**tokenizer(acceptedCats, return_tensors='pt', padding=True, truncation=True), output_hidden_states=True).hidden_states[0].mean(axis=1)
+    
+    correct = 0
+
+
+    for i in range(batchSize):
+        probabilities = (last_hidden_states[i] @ last_hidden_states_labels).softmax(0)
+        prediction = acceptedCats[probabilities[0].index(max(probabilities[0]))]
+        target = filteredTargets[i]
+
+        if prediction == target:
+            correct += 1
+
+
+
+
+
+def plotAccs():
     accuracies = []
 
     accuracy = deep_learning_model()
@@ -204,19 +263,9 @@ def main():
     
     plt.plot([3, 4, 5], accuracies)
     plt.show()
-    # listAccuracy = []
-    # listTopCategories = ["POLITICS", "WELLNESS", "ENTERTAINMENT", "TRAVEL", "STYLE & BEAUTY"]
-    
-    # listAccuracy.append(deep_learning_model())
-
-    # acceptedCats.append("TRAVEL")
-    # listAccuracy.append(deep_learning_model())
-
-    # acceptedCats.append("STYLE & BEAUTY")
-    # listAccuracy.append(deep_learning_model())
-
-    # plt.plot([3, 4, 5], listAccuracy)
-    # plt.show()
+def main():
+    directlyLoadedModel()
 
 if __name__ == '__main__':
     main()
+    
