@@ -180,13 +180,7 @@ def deep_learning_model():
 def directlyLoadedModel():
     inputs, allTargets, allHeadlines, allCategories, filteredHeadlines, filteredTargets = get_data()
     
-    tokenizer = AutoTokenizer.from_pretrained(
-        "MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli"
-        )
     
-    model = AutoModelForSequenceClassification.from_pretrained(
-        "MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli"
-                                                               )
     
     
 
@@ -196,6 +190,13 @@ def directlyLoadedModel():
         batchSize = 10000
         headlines = filteredHeadlines[:batchSize + 1]
         with torch.inference_mode():
+            tokenizer = AutoTokenizer.from_pretrained(
+            "MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli"
+            )
+        
+            model = AutoModelForSequenceClassification.from_pretrained(
+            "MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli"
+                                                                )
             last_hidden_states = model(**tokenizer(headlines, return_tensors='pt', padding=True, truncation=True), output_hidden_states=True).hidden_states[0].mean(axis=1)
             last_hidden_states_labels = model(**tokenizer(acceptedCats, return_tensors='pt', padding=True, truncation=True), output_hidden_states=True).hidden_states[0].mean(axis=1)
             np.savez(savedFile, lhs=last_hidden_states, lhsl=last_hidden_states_labels)
