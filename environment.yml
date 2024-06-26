@@ -1,0 +1,12 @@
+name: text-ml  
+channels:  
+- conda-forge  
+- defaults  
+dependencies:  
+- matplotlib  
+- python=3.10  
+- tqdm  
+- scikit-learn  
+- transformers  
+- pytorch  
+- pip  
