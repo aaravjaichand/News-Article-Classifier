@@ -8,8 +8,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
 import matplotlib.pyplot as plt
 import torch
-from transformers import pipeline
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, AutoModel
+from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification, AutoModel
 
 from features import preposition, upperLower, articles, avg, sentenceLen
 
@@ -179,7 +178,7 @@ def directlyLoadedModel():
     savedFile = Path("saved_embeddings")
 
     if not savedFile.exists():
-        batchSize = 10000
+        batchSize = 10
         headlines = filteredHeadlines[:batchSize + 1]
         model_id = "MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli"
         with torch.inference_mode():
@@ -199,7 +198,7 @@ def directlyLoadedModel():
         correct = 0
 
         for i in range(batchSize):
-            probabilities = (last_hidden_states[i] @ last_hidden_states_labels).softmax(0)
+            probabilities = (last_hidden_states_labels @ last_hidden_states[i]).softmax(0)
             prediction = acceptedCats[probabilities[0].index(max(probabilities[0]))]
             target = filteredTargets[i]
 
