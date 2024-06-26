@@ -197,13 +197,14 @@ def directlyLoadedModel():
 
         correct = 0
 
-        for i in range(batchSize):
-            probabilities = (last_hidden_states_labels @ last_hidden_states[i]).softmax(0)
-            prediction = acceptedCats[probabilities[0].index(max(probabilities[0]))]
-            target = filteredTargets[i]
+    for i in range(batchSize):
+        probabilities = (last_hidden_states_labels @ last_hidden_states[i]).softmax(0)
+        prediction = acceptedCats[probabilities[0].index(max(probabilities[0]))]
+        target = filteredTargets[i]
 
-            if prediction == target:
-                correct += 1
+        if prediction == target:
+            correct += 1
+    print(correct)
 
 def sentence_transformers():
     inputs, allTargets, allHeadlines, allCategories, filteredHeadlines, filteredTargets = get_data()
