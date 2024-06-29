@@ -175,7 +175,7 @@ def deep_learning_model():
 def directlyLoadedModel():
     inputs, allTargets, allHeadlines, allCategories, filteredHeadlines, filteredTargets = get_data()
 
-    savedFile = Path("saved_embeddings")
+    savedFile = Path("saved_embeddings.npz")
 
     if not savedFile.exists():
         batchSize = 10
@@ -195,16 +195,10 @@ def directlyLoadedModel():
         last_hidden_states = arr["lhs"]
         last_hidden_states_labels = arr["lhsl"]
 
-        correct = 0
-
-    for i in range(batchSize):
-        probabilities = (last_hidden_states_labels @ last_hidden_states[i]).softmax(0)
-        prediction = acceptedCats[probabilities[0].index(max(probabilities[0]))]
-        target = filteredTargets[i]
-
-        if prediction == target:
-            correct += 1
-    print(correct)
+    predictions = (last_hidden_states_labels @ last_hidden_states.T).softmax(0).argmax(axis=0)
+    prediction_strings = np.array(acceptedCats)[np.array(predictions)]
+    targets = filteredTargets[: batchSize + 1]
+    print(f'Accuracy: {(prediction_strings == targets).mean() * 100:.3f}%')
 
 def sentence_transformers():
     inputs, allTargets, allHeadlines, allCategories, filteredHeadlines, filteredTargets = get_data()
@@ -212,20 +206,15 @@ def sentence_transformers():
     with torch.inference_mode():
         tokenizer = AutoTokenizer.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
         model = AutoModel.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
+        batch_size = 30
+        headlines = filteredHeadlines[: batch_size]
+        last_hidden_states = model(**tokenizer(headlines, return_tensors='pt', padding=True, truncation=True), output_hidden_states=True).hidden_states[0].mean(axis=1)
+        last_hidden_states_labels = model(**tokenizer(acceptedCats, return_tensors='pt', padding=True, truncation=True), output_hidden_states=True).hidden_states[0].mean(axis=1)
 
-    batch_size = 10
-    headlines = filteredHeadlines[:30]
-    last_hidden_states = model(**tokenizer(headlines, return_tensors='pt', padding=True, truncation=True), output_hidden_states=True).hidden_states[0].mean(axis=1)
-    last_hidden_states_labels = model(**tokenizer(acceptedCats, return_tensors='pt', padding=True, truncation=True), output_hidden_states=True).hidden_states[0].mean(axis=1)
-    correct = 0
-
-    for i in range(batch_size):
-        probabilities = (last_hidden_states[i] @ last_hidden_states_labels).softmax(0)
-        prediction = acceptedCats[probabilities[0].index(max(probabilities[0]))]
-        target = filteredTargets[i]
-
-        if prediction == target:
-            correct += 1
+    predictions = (last_hidden_states_labels @ last_hidden_states.T).softmax(0).argmax(axis=0)
+    prediction_strings = np.array(acceptedCats)[np.array(predictions)]
+    targets = filteredTargets[: batch_size]
+    print(f'Accuracy: {(prediction_strings == targets).mean() * 100:.3f}%')
 
 def plotAccs():
     accuracies = []
@@ -249,6 +238,7 @@ def plotAccs():
 
 def main():
     directlyLoadedModel()
+    sentence_transformers()
 
 if __name__ == '__main__':
     main()
