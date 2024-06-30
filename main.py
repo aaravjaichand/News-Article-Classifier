@@ -173,48 +173,144 @@ def deep_learning_model():
     return correct // total
 
 def directlyLoadedModel():
-    inputs, allTargets, allHeadlines, allCategories, filteredHeadlines, filteredTargets = get_data()
+    global samples
+    samples = int(input("Number of samples? "))
+    def singleAcc():
+        inputs, allTargets, allHeadlines, allCategories, filteredHeadlines, filteredTargets = get_data()
 
-    savedFile = Path("saved_embeddings.npz")
+        savedFile = Path("saved_embeddings.npz")
+        
+        if not savedFile.exists():
+            headlines = filteredHeadlines[:samples]
+            model_id = "MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli"
+            with torch.inference_mode():
+                tokenizer = AutoTokenizer.from_pretrained(model_id)
+                model = AutoModelForSequenceClassification.from_pretrained(model_id)
+                last_hidden_states = model(
+                    **tokenizer(headlines, return_tensors='pt', padding=True, truncation=True),
+                    output_hidden_states=True
+                ).hidden_states[0].mean(axis=1)
+                last_hidden_states_labels = model(**tokenizer(acceptedCats, return_tensors='pt', padding=True, truncation=True), output_hidden_states=True).hidden_states[0].mean(axis=1)
+                np.savez(savedFile, lhs=last_hidden_states, lhsl=last_hidden_states_labels)
+        else:
+            arr = np.load(savedFile)
+            last_hidden_states = torch.from_numpy(arr["lhs"])
+            last_hidden_states_labels = torch.from_numpy(arr["lhsl"])
+            
+            
+            predictions = (last_hidden_states_labels @ last_hidden_states.T).softmax(0).argmax(axis=0)
+            prediction_strings = np.array(acceptedCats)[np.array(predictions)]
+            targets = filteredTargets[:samples]
+            print(f'Accuracy: {(prediction_strings == targets).mean() * 100:.3f}%')
+    
+    def optLayer():
+        inputs, allTargets, allHeadlines, allCategories, filteredHeadlines, filteredTargets = get_data()
 
-    if not savedFile.exists():
-        batchSize = 10
-        headlines = filteredHeadlines[:batchSize + 1]
-        model_id = "MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli"
-        with torch.inference_mode():
-            tokenizer = AutoTokenizer.from_pretrained(model_id)
-            model = AutoModelForSequenceClassification.from_pretrained(model_id)
-            last_hidden_states = model(
-                **tokenizer(headlines, return_tensors='pt', padding=True, truncation=True),
-                output_hidden_states=True
-            ).hidden_states[0].mean(axis=1)
-            last_hidden_states_labels = model(**tokenizer(acceptedCats, return_tensors='pt', padding=True, truncation=True), output_hidden_states=True).hidden_states[0].mean(axis=1)
-            np.savez(savedFile, lhs=last_hidden_states, lhsl=last_hidden_states_labels)
-    else:
-        arr = np.load(savedFile)
-        last_hidden_states = arr["lhs"]
-        last_hidden_states_labels = arr["lhsl"]
 
-    predictions = (last_hidden_states_labels @ last_hidden_states.T).softmax(0).argmax(axis=0)
-    prediction_strings = np.array(acceptedCats)[np.array(predictions)]
-    targets = filteredTargets[: batchSize + 1]
-    print(f'Accuracy: {(prediction_strings == targets).mean() * 100:.3f}%')
+        bestAcc = -1
+        bestLayer = -1
+        savedFile = Path("saved_embeddings.npz")
+        listAccuracies = []
+        if not savedFile.exists():
+            headlines = filteredHeadlines[:samples]
+            model_id = "MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli"
+            with torch.inference_mode():
+                tokenizer = AutoTokenizer.from_pretrained(model_id)
+                model = AutoModelForSequenceClassification.from_pretrained(model_id)
+                last_hidden_states = model(
+                    **tokenizer(headlines, return_tensors='pt', padding=True, truncation=True),
+                    output_hidden_states=True
+                ).hidden_states
+                last_hidden_states_labels = model(**tokenizer(acceptedCats, return_tensors='pt', padding=True, truncation=True), output_hidden_states=True).hidden_states
+                np.savez(savedFile, lhs=last_hidden_states, lhsl=last_hidden_states_labels)
+        else:
+            arr = np.load(savedFile)
+            last_hidden_states = torch.from_numpy(arr["lhs"])
+            last_hidden_states_labels = torch.from_numpy(arr["lhsl"])
+            
+            for i in tqdm(range(len(last_hidden_states)), desc= "Finding optimal layer..."):
+                predictions = (last_hidden_states_labels[i].mean(axis=1) @ last_hidden_states[i].mean(axis=1).T).softmax(0).argmax(axis=0)
+                prediction_strings = np.array(acceptedCats)[np.array(predictions)]
+                targets = filteredTargets[: samples]
+                acc = (prediction_strings == targets).mean() * 100
+                if acc > bestAcc:
+                    bestAcc = acc
+                    bestLayer = i
+                listAccuracies.append(acc)
+    
+        plt.xlabel("Layer used by model")
+        plt.ylabel("Accuracy")
+        plt.plot(listAccuracies)   
+        plt.show()
+
+        return bestLayer, bestAcc
+    
+    bestLayer, bestAcc = optLayer()
+
+    print("Optimal layer:", bestLayer + 1)
+    print("Accuracy with optimal layer: ", bestAcc)
 
 def sentence_transformers():
     inputs, allTargets, allHeadlines, allCategories, filteredHeadlines, filteredTargets = get_data()
 
-    with torch.inference_mode():
-        tokenizer = AutoTokenizer.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
-        model = AutoModel.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
-        batch_size = 30
-        headlines = filteredHeadlines[: batch_size]
-        last_hidden_states = model(**tokenizer(headlines, return_tensors='pt', padding=True, truncation=True), output_hidden_states=True).hidden_states[0].mean(axis=1)
-        last_hidden_states_labels = model(**tokenizer(acceptedCats, return_tensors='pt', padding=True, truncation=True), output_hidden_states=True).hidden_states[0].mean(axis=1)
+    global samples
+    samples = int(input("Number of samples? "))
+    
+    global headlines
+    headlines = filteredHeadlines[: samples]
 
-    predictions = (last_hidden_states_labels @ last_hidden_states.T).softmax(0).argmax(axis=0)
-    prediction_strings = np.array(acceptedCats)[np.array(predictions)]
-    targets = filteredTargets[: batch_size]
-    print(f'Accuracy: {(prediction_strings == targets).mean() * 100:.3f}%')
+    def batches(layer):
+        with torch.inference_mode():
+            tokenizer = AutoTokenizer.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
+            model = AutoModel.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
+            
+            last_hidden_states = model(**tokenizer(headlines, return_tensors='pt', padding=True, truncation=True), output_hidden_states=True).hidden_states
+            last_hidden_states_labels = model(**tokenizer(acceptedCats, return_tensors='pt', padding=True, truncation=True), output_hidden_states=True).hidden_states
+
+
+        predictions = (last_hidden_states_labels[layer].mean(axis=1) @ last_hidden_states[layer].mean(axis=1).T).softmax(0).argmax(axis=0)
+        prediction_strings = np.array(acceptedCats)[np.array(predictions)]
+        targets = filteredTargets[: samples]
+        print(f'Accuracy: {(prediction_strings == targets).mean() * 100:.3f}%')
+
+
+    def graph():
+        with torch.inference_mode():
+            
+            model = AutoModel.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
+            tokenizer = AutoTokenizer.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
+            last_hidden_states = model(**tokenizer(headlines, return_tensors='pt', padding=True, truncation=True), output_hidden_states=True).hidden_states
+            last_hidden_states_labels = model(**tokenizer(acceptedCats, return_tensors='pt', padding=True, truncation=True), output_hidden_states=True).hidden_states
+
+        bestLayer = -1
+        bestAcc = -1
+
+        listAccuracies = []
+
+        for i in tqdm(range(len(last_hidden_states)), desc= "Finding optimal layer..."):
+            predictions = (last_hidden_states_labels[i].mean(axis=1) @ last_hidden_states[i].mean(axis=1).T).softmax(0).argmax(axis=0)
+            prediction_strings = np.array(acceptedCats)[np.array(predictions)]
+            targets = filteredTargets[: samples]
+            acc = (prediction_strings == targets).mean() * 100
+            if acc > bestAcc:
+                bestAcc = acc
+                bestLayer = i
+            listAccuracies.append(acc)
+        plt.xlabel("Layer used by model")
+        plt.ylabel("Accuracy")
+        plt.plot(listAccuracies)   
+        plt.show()
+
+        return bestLayer, bestAcc
+    
+        
+
+    bestLayer, bestAcc = graph()
+    
+    
+    print("Optimal layer:", bestLayer + 1)
+    print("Accuracy with optimal layer: ", bestAcc)
+
 
 def plotAccs():
     accuracies = []
