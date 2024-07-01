@@ -12,7 +12,7 @@ from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassifica
 
 from features import preposition, upperLower, articles, avg, sentenceLen
 
-acceptedCats = ["POLITICS", "WELLNESS", "ENTERTAINMENT"]
+
 
 def display_accuracy(target, predictions, labels, plot_title):
     cm = confusion_matrix(target, predictions)
@@ -53,6 +53,7 @@ def get_data():
             data = json.loads(line)
             headline = data["headline"]
             short_desc = data["short_description"]
+            category = data["category"]
             if category in acceptedCats:
                 inputs.append(headline + '. ' + short_desc)
 
@@ -71,13 +72,14 @@ def get_data():
 
 def sklearn_model():
     inputs, allTargets, allHeadlines, allCategories, filteredHeadlines, filteredTargets = get_data()
-    test_size = int(len(inputs) * 0.1)
+    test_size = 10000
+    print(len(inputs))
 
     # Random Forest Classifier:
-    m = RandomForestClassifier(
-        random_state=12, n_estimators=70, max_depth=5, verbose=1)
-    m.fit(inputs[test_size:], filteredTargets[test_size:])
-    results = m.predict(inputs[:test_size])
+    # m = RandomForestClassifier(
+    #     random_state=12, n_estimators=70, max_depth=5, verbose=1)
+    # m.fit(inputs[test_size:], filteredTargets[test_size:])
+    # results = m.predict(inputs[:test_size])
 
     # MLP Classifier
     lrs = np.logspace(-4, -1, 4)
@@ -94,6 +96,7 @@ def sklearn_model():
         i += 1
         acc = np.mean(results == filteredTargets[:test_size])
         accs.append(acc)
+        print(acc)
     plt.plot(lrs, accs)
     plt.show()
 
@@ -110,7 +113,10 @@ def sklearn_model():
         filteredTargets[:test_size], results, np.unique(filteredTargets),
         "Confusion Matrix (Close to view accuracy)"
     )
+    acc = np.mean(results == filteredTargets[:test_size])
+    print("Accuracy of best LR:", acc)
     print("Min loss:", min(classifier.loss_curve_))
+    print(results)
 
 def deep_learning_model():
     inputs, allTargets, allHeadlines, allCategories, filteredHeadlines, filteredTargets = get_data()
@@ -175,7 +181,7 @@ def deep_learning_model():
 def directlyLoadedModel():
     global samples
     samples = int(input("Number of samples? "))
-    def singleAcc():
+    def singleAcc(layer):
         inputs, allTargets, allHeadlines, allCategories, filteredHeadlines, filteredTargets = get_data()
 
         savedFile = Path("saved_embeddings.npz")
@@ -189,8 +195,8 @@ def directlyLoadedModel():
                 last_hidden_states = model(
                     **tokenizer(headlines, return_tensors='pt', padding=True, truncation=True),
                     output_hidden_states=True
-                ).hidden_states[0].mean(axis=1)
-                last_hidden_states_labels = model(**tokenizer(acceptedCats, return_tensors='pt', padding=True, truncation=True), output_hidden_states=True).hidden_states[0].mean(axis=1)
+                ).hidden_states
+                last_hidden_states_labels = model(**tokenizer(acceptedCats, return_tensors='pt', padding=True, truncation=True), output_hidden_states=True).hidden_states
                 np.savez(savedFile, lhs=last_hidden_states, lhsl=last_hidden_states_labels)
         else:
             arr = np.load(savedFile)
@@ -198,9 +204,10 @@ def directlyLoadedModel():
             last_hidden_states_labels = torch.from_numpy(arr["lhsl"])
             
             
-            predictions = (last_hidden_states_labels @ last_hidden_states.T).softmax(0).argmax(axis=0)
+            predictions = (last_hidden_states_labels[layer].mean(axis=1) @ last_hidden_states[layer].mean(axis=1).T).softmax(0).argmax(axis=0)
             prediction_strings = np.array(acceptedCats)[np.array(predictions)]
-            targets = filteredTargets[:samples]
+            targets = filteredTargets[: samples]
+            acc = (prediction_strings == targets).mean() * 100
             print(f'Accuracy: {(prediction_strings == targets).mean() * 100:.3f}%')
     
     def optLayer():
@@ -221,8 +228,10 @@ def directlyLoadedModel():
                     **tokenizer(headlines, return_tensors='pt', padding=True, truncation=True),
                     output_hidden_states=True
                 ).hidden_states
-                last_hidden_states_labels = model(**tokenizer(acceptedCats, return_tensors='pt', padding=True, truncation=True), output_hidden_states=True).hidden_states
-                np.savez(savedFile, lhs=last_hidden_states, lhsl=last_hidden_states_labels)
+                predictions = (last_hidden_states_labels[6].mean(axis=1) @ last_hidden_states[6].mean(axis=1).T).softmax(0).argmax(axis=0)
+                prediction_strings = np.array(acceptedCats)[np.array(predictions)]
+                targets = filteredTargets[: samples]
+                acc = (prediction_strings == targets).mean() * 100
         else:
             arr = np.load(savedFile)
             last_hidden_states = torch.from_numpy(arr["lhs"])
@@ -245,10 +254,16 @@ def directlyLoadedModel():
 
         return bestLayer, bestAcc
     
-    bestLayer, bestAcc = optLayer()
+    
+    funcToUse = int(input("Would you like to find the optimal layer(1) to use or run on one layer(2)? My choice: "))
+    
+    if funcToUse == 2:
+        singleAcc(int(input("What layer (0-12): ")))
+    else:
+        bestLayer, bestAcc = optLayer()
 
-    print("Optimal layer:", bestLayer + 1)
-    print("Accuracy with optimal layer: ", bestAcc)
+        print("Optimal layer:", bestLayer)
+        print("Accuracy with optimal layer: ", bestAcc)
 
 def sentence_transformers():
     inputs, allTargets, allHeadlines, allCategories, filteredHeadlines, filteredTargets = get_data()
@@ -303,13 +318,15 @@ def sentence_transformers():
 
         return bestLayer, bestAcc
     
-        
+    funcToUse = int(input("Would you like to find the optimal layer(1) to use or run on one layer(2)? My choice: "))
+    
+    if funcToUse == 2:
+        batches(int(input("What layer (0-7): ")))
+    else:
+        bestLayer, bestAcc = graph()
+        print("Optimal layer:", bestLayer)
+        print("Accuracy with optimal layer: ", bestAcc)
 
-    bestLayer, bestAcc = graph()
-    
-    
-    print("Optimal layer:", bestLayer + 1)
-    print("Accuracy with optimal layer: ", bestAcc)
 
 
 def plotAccs():
@@ -333,8 +350,31 @@ def plotAccs():
     plt.show()
 
 def main():
-    directlyLoadedModel()
-    sentence_transformers()
+    global acceptedCats
+    acceptedCats = []
+
+    fpath = Path("saved_data.npz")
+
+    if fpath.exists():
+        fpath.unlink()
+
+
+    numCategories = int(input("Number of Categories: (1) Top 3; (2) Top 4; (3) Top 5: "))
+    if numCategories == 1:
+        acceptedCats = ["POLITICS", "WELLNESS", "ENTERTAINMENT"]
+    elif numCategories == 2:
+        acceptedCats = ["POLITICS", "WELLNESS", "ENTERTAINMENT", "TRAVEL"]
+    else:
+        acceptedCats = ["POLITICS", "WELLNESS", "ENTERTAINMENT", "TRAVEL", "STYLE & BEAUTY"]
+    
+    modelToUse = int(input("Which model would you like to use? (1) SciKit Learn; (2) DeBERTA-v3; (3) Sentence Transfomers; My answer: "))
+
+    if modelToUse == 1:
+        sklearn_model()
+    elif modelToUse == 2:
+        directlyLoadedModel()
+    else:
+        sentence_transformers()
 
 if __name__ == '__main__':
     main()
