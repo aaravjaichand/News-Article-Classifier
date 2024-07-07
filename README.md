@@ -1,4 +1,4 @@
-## Machine Learning to train on news articles and descriptions
+# Machine Learning to train on news articles and descriptions
 
 - Install [Python](https://www.python.org) version 3.8 or above
 - Install Conda using `pip install conda`
@@ -6,4 +6,22 @@
 - Activate environment using `conda activate environment.yml`
 - Download the [dataset](https://www.kaggle.com/datasets/rmisra/news-category-dataset/data)
 - Run `python main.py`
+
+## Please see below the accuracies of the models we used
+
+These models were tested on 10,000 articles each. 
+
+Model Link:
+
+- [DeBERTA](https://huggingface.co/MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli)
+- [Mini LM](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2)
+
+
+Accuracies:
+
+|          | SciKit Learn Models | DeBERTA-v3|Mini LM|
+|----------|----------|----------|----------|
+|**Top 3 Categories**|64.35%|44.00%|75.42% |
+|**Top 4 Categories**|65.54%|40.40%|73.10% |
+|**Top 5 Categories**|50.98%|36.60%|71.07% |
 
