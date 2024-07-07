@@ -5,19 +5,21 @@
 - Install dependencies from the environment.yml file using `conda env create -f environment.yaml`
 - Activate environment using `conda activate environment.yml`
 - Download the [dataset](https://www.kaggle.com/datasets/rmisra/news-category-dataset/data)
-- Run `python main.py`
+- **For best results, choose** `MiniLM` **when running** `main.py`
 
-## Please see below the accuracies of the models we used
 
-These models were tested on 10,000 articles each. 
 
-Model Link:
+
+
+**Model Links**:
 
 - [DeBERTA](https://huggingface.co/MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli)
 - [Mini LM](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2)
 
 
-Accuracies:
+**Accuracies**:
+
+These models were tested on 10,000 articles each. 
 
 |          | SciKit Learn Models | DeBERTA-v3|Mini LM|
 |----------|----------|----------|----------|
