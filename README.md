@@ -2,9 +2,9 @@
 
 - Install [Python](https://www.python.org) version 3.8 or above
 - Install Conda using `pip install conda`
-- Install dependencies from the environment.yml file using `conda env create -f environment.yaml`
+- Install dependencies from the `environment.yml` file using `conda env create -f environment.yml`
 - Activate environment using `conda activate environment.yml`
-- Download the [dataset](https://www.kaggle.com/datasets/rmisra/news-category-dataset/data)
+- Download the [dataset](https://www.kaggle.com/datasets/rmisra/news-category-dataset/data) from Kaggle
 - **For best results, choose** `MiniLM` **when running** `main.py`
 
 
