@@ -31,10 +31,10 @@ These models were tested on 10,000 articles each.
 
 - Install [Python](https://www.python.org) version 3.8 or above
 - Install Conda using `pip install conda`
-- Install dependencies from the `environment.yml` file using `conda env create -f environment.yml`
-- Activate environment using `conda activate environment.yml`
+- Install dependencies from the `environment.yml` file using `conda env create -f environment.yml`. This creates an environment called `text-ML`.
+- Activate environment using `conda activate text-ML` or by going into settings for your code editor and selecting `text ml` from there, if your code editor has that feature. 
 - Download the [dataset](https://www.kaggle.com/datasets/rmisra/news-category-dataset/data) from Kaggle
-- **For best results, choose** `MiniLM` **when running** `main.py`
+- **Note that when running a program on one singular news article, it automatically uses the best model, `Mini LM`**
 
 ## Example of Program Use:
 
