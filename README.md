@@ -23,7 +23,7 @@ These models were tested on 10,000 articles each.
 
 |          | SciKit Learn Models | DeBERTA-v3|Mini LM|
 |----------|----------|----------|----------|
-|**Top 3 Categories**|64.35%|44.00%|75.42% |
+|**Top 3 Categories**|64.35%|50.70%|75.42% |
 |**Top 4 Categories**|65.54%|40.40%|73.10% |
 |**Top 5 Categories**|50.98%|36.60%|71.07% |
 
