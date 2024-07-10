@@ -228,23 +228,8 @@ def directlyLoadedModel():
 
         bestAcc = -1
         bestLayer = -1
-        savedFile = Path("saved_embeddings.npz")
         listAccuracies = []
-        # if not savedFile.exists():
-        #     headlines = filteredHeadlines[:samples]
-        #     model_id = "MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli"
-        #     with torch.inference_mode():
-        #         tokenizer = AutoTokenizer.from_pretrained(model_id)
-        #         model = AutoModelForSequenceClassification.from_pretrained(model_id)
-        #         last_hidden_states = model(
-        #             **tokenizer(headlines, return_tensors='pt', padding=True, truncation=True),
-        #             output_hidden_states=True
-        #         ).hidden_states
-        #         predictions = (last_hidden_states_labels[6].mean(axis=1) @ last_hidden_states[6].mean(axis=1).T).softmax(0).argmax(axis=0)
-        #         prediction_strings = np.array(acceptedCats)[np.array(predictions)]
-        #         targets = filteredTargets[: samples]
-        #         acc = (prediction_strings == targets).mean() * 100
-        # else:
+
 
         batch_size = int(input("Batch Size: "))
 
@@ -285,7 +270,7 @@ def directlyLoadedModel():
                     targets = filteredTargets[start:end]
                     
 
-                    if prediction_strings[j] == filteredTargets[j]:
+                    if prediction_strings[j] ==  targets[j]:
                         correct += 1
             acc = correct / total
 
