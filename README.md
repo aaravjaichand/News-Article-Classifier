@@ -36,3 +36,6 @@ These models were tested on 10,000 articles each.
 - Download the [dataset](https://www.kaggle.com/datasets/rmisra/news-category-dataset/data) from Kaggle
 - **For best results, choose** `MiniLM` **when running** `main.py`
 
+## Example of Program Use:
+
+![Alt Text](https://media.giphy.com/media/vKxz9P2LFuMjUuDnuP/giphy.gif)
