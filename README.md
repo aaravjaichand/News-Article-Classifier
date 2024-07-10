@@ -25,5 +25,5 @@ These models were tested on 10,000 articles each.
 |----------|----------|----------|----------|
 |**Top 3 Categories**|64.35%|50.70%|75.42% |
 |**Top 4 Categories**|65.54%|48.50%|73.10% |
-|**Top 5 Categories**|50.98%|36.60%|71.07% |
+|**Top 5 Categories**|37.00%|36.60%|71.07% |
 
