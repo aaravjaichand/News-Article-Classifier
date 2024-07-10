@@ -288,39 +288,7 @@ def directlyLoadedModel():
 
         return bestLayer, bestAcc
 
-        
 
-
-
-
-
-
-
-        # arr = np.load(savedFile)
-        # last_hidden_states = torch.from_numpy(arr["lhs"])
-        # last_hidden_states_labels = torch.from_numpy(arr["lhsl"])
-        
-        # for i in tqdm(range(len(last_hidden_states)), desc= "Finding optimal layer..."):
-
-
-
-        #     predictions = (last_hidden_states_labels[i].mean(axis=1) @ last_hidden_states[i].mean(axis=1).T).softmax(0).argmax(axis=0)
-        #     prediction_strings = np.array(acceptedCats)[np.array(predictions)]
-        #     targets = filteredTargets[: samples]
-        #     acc = (prediction_strings == targets).mean() * 100
-        #     if acc > bestAcc:
-        #         bestAcc = acc
-        #         bestLayer = i
-        #     listAccuracies.append(acc)
-    
-        # plt.xlabel("Layer used by model")
-        # plt.ylabel("Accuracy")
-        # plt.plot(listAccuracies)   
-        # plt.show()
-
-        # return bestLayer, bestAcc
-    
-    
     funcToUse = int(input("Would you like to find the optimal layer(1) to use or run on one layer(2)? My choice: "))
     
     if funcToUse == 2:
@@ -393,8 +361,6 @@ def sentence_transformers():
         print("Optimal layer:", bestLayer)
         print("Accuracy with optimal layer: ", bestAcc)
 
-
-
 def plotAccs():
     accuracies = []
 
@@ -423,24 +389,77 @@ def main():
 
     if fpath.exists():
         fpath.unlink()
+    print("\n")
+    userChoice = int(input(
+        "Would you like to classify one singular news article (1), or run the program on a group of articles(2)?: "))
+
+    if userChoice == 1:
+
+        articleHeadline = input(
+            "Copy and paste article headline and short description here: ")
+
+        with torch.inference_mode():
+            acceptedCats = ["POLITICS", "WELLNESS",
+                            "ENTERTAINMENT", "TRAVEL", "STYLE & BEAUTY"]
+
+            model = AutoModel.from_pretrained(
+                "sentence-transformers/all-MiniLM-L6-v2")
+            tokenizer = AutoTokenizer.from_pretrained(
+                "sentence-transformers/all-MiniLM-L6-v2")
+            last_hidden_states = model(**tokenizer(articleHeadline, return_tensors='pt',
+                                       padding=True, truncation=True), output_hidden_states=True).hidden_states
+        
+            last_hidden_states_labels = model(
+                **tokenizer(acceptedCats, return_tensors='pt', padding=True, truncation=True), output_hidden_states=True).hidden_states
+
+            predictions = (last_hidden_states_labels[-1].mean(
+                axis=1) @ last_hidden_states[-1].mean(axis=1).T).softmax(0).argmax(axis=0)
+            prediction1 = np.array(acceptedCats)[np.array(predictions)]
 
 
-    numCategories = int(input("Number of Categories: (1) Top 3; (2) Top 4; (3) Top 5: "))
-    if numCategories == 1:
-        acceptedCats = ["POLITICS", "WELLNESS", "ENTERTAINMENT"]
-    elif numCategories == 2:
-        acceptedCats = ["POLITICS", "WELLNESS", "ENTERTAINMENT", "TRAVEL"]
+            acceptedCats = ['ARTS', 'ARTS & CULTURE', 'BLACK VOICES', 'BUSINESS', 'COLLEGE', 'COMEDY',
+                'CRIME', 'CULTURE & ARTS', 'DIVORCE', 'EDUCATION', 'ENTERTAINMENT',
+                'ENVIRONMENT', 'FIFTY', 'FOOD & DRINK', 'GOOD NEWS', 'GREEN', 'HEALTHY LIVING',
+                'HOME & LIVING', 'IMPACT', 'LATINO VOICES', 'MEDIA', 'MONEY', 'PARENTING',
+                'PARENTS', 'POLITICS', 'QUEER VOICES', 'RELIGION', 'SCIENCE', 'SPORTS', 'STYLE',
+                'STYLE & BEAUTY', 'TASTE', 'TECH', 'THE WORLDPOST', 'TRAVEL', 'U.S. NEWS',
+                'WEDDINGS', 'WEIRD NEWS', 'WELLNESS', 'WOMEN', 'WORLD NEWS', 'WORLDPOST']
+
+            last_hidden_states_labels = model(
+                **tokenizer(acceptedCats, return_tensors='pt', padding=True, truncation=True), output_hidden_states=True).hidden_states
+
+            predictions = (last_hidden_states_labels[-1].mean(
+                axis=1) @ last_hidden_states[-1].mean(axis=1).T).softmax(0).argmax(axis=0)
+            prediction2 = np.array(acceptedCats)[np.array(predictions)]
+
+            print("\n")
+            
+            if prediction1 == prediction2:
+                print("Predicted: ", prediction1[0])
+            else:
+                print("Predicted: ", prediction1[0] , "and", prediction2[0])
+            print("\n")
+
     else:
-        acceptedCats = ["POLITICS", "WELLNESS", "ENTERTAINMENT", "TRAVEL", "STYLE & BEAUTY"]
-    
-    modelToUse = int(input("Which model would you like to use? (1) SciKit Learn; (2) DeBERTA-v3; (3) Sentence Transfomers; My answer: "))
+        numCategories = int(
+            input("Number of Categories: (1) Top 3; (2) Top 4; (3) Top 5: "))
+        if numCategories == 1:
+            acceptedCats = ["POLITICS", "WELLNESS", "ENTERTAINMENT"]
+        elif numCategories == 2:
+            acceptedCats = ["POLITICS", "WELLNESS", "ENTERTAINMENT", "TRAVEL"]
+        else:
+            acceptedCats = ["POLITICS", "WELLNESS",
+                            "ENTERTAINMENT", "TRAVEL", "STYLE & BEAUTY"]
 
-    if modelToUse == 1:
-        sklearn_model()
-    elif modelToUse == 2:
-        directlyLoadedModel()
-    else:
-        sentence_transformers()
+        modelToUse = int(input(
+            "Which model would you like to use? (1) SciKit Learn; (2) DeBERTA-v3; (3) Sentence Transfomers: "))
+
+        if modelToUse == 1:
+            sklearn_model()
+        elif modelToUse == 2:
+            directlyLoadedModel()
+        else:
+            sentence_transformers()
 
 if __name__ == '__main__':
     main()
